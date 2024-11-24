@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Currency, PaymentMethod } from 'utils/schemas/enums';
+import { Currency, PaymentMethod } from '@/utils/schemas/enums';
 import { CryptoPaymentDetailsDto } from '@/utils/dtos/payment-details/crypto-payment-details.dto';
 import { BankPaymentDetailsDto } from '@/utils/dtos/payment-details/bank-payment-details.dto';
 
