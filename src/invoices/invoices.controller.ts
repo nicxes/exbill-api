@@ -1,5 +1,5 @@
 import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
-import { CreateInvoiceDto } from '../dtos/invoices/create-invoice.dto';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Controller('invoices')
 export class InvoicesController {
