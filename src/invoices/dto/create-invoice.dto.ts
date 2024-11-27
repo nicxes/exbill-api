@@ -18,9 +18,11 @@ export type PaymentDetails = BankPaymentDetailsDto | CryptoPaymentDetailsDto;
 export class CreateInvoiceDto {
   // Invoice properties
   @IsDate()
+  @Type(() => Date)
   issueDate: Date;
 
   @IsDate()
+  @Type(() => Date)
   dueDate: Date;
 
   @IsEnum(Currency)
@@ -42,8 +44,12 @@ export class CreateInvoiceDto {
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 
-  @ValidateNested() // Validates the nested object
-  @Type(() => Object) // Use dynamic validation based on paymentMethod
+  @ValidateNested()
+  @Type(({ object }) => {
+    return object.paymentMethod === 'BANK'
+      ? BankPaymentDetailsDto
+      : CryptoPaymentDetailsDto;
+  })
   paymentDetails: BankPaymentDetailsDto | CryptoPaymentDetailsDto;
 
   // From properties
