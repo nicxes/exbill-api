@@ -27,6 +27,11 @@ export class InvoicesController {
     return this.invoicesService.findAll();
   }
 
+  @Get(':id')
+  findOne(id: string) {
+    return this.invoicesService.findOne(id);
+  }
+
   @Post()
   @UseInterceptors(AnyFilesInterceptor())
   async createInvoice(
