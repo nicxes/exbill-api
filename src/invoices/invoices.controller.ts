@@ -1,22 +1,31 @@
 import {
+  Get,
+  Post,
   Body,
   Controller,
-  Post,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { v4 as uuidv4 } from 'uuid';
 
 // DTOs
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 // Services
 import { CloudflareR2Service } from '../cloudflare-r2/cloudflare-r2.service';
+import { InvoicesService } from './invoices.service';
 
 @Controller('invoices')
 export class InvoicesController {
-  constructor(private readonly cloudflareR2Service: CloudflareR2Service) {}
+  constructor(
+    private readonly cloudflareR2Service: CloudflareR2Service,
+    private readonly invoicesService: InvoicesService,
+  ) {}
+
+  @Get()
+  findAll() {
+    return this.invoicesService.findAll();
+  }
 
   @Post()
   @UseInterceptors(AnyFilesInterceptor())
@@ -24,8 +33,10 @@ export class InvoicesController {
     @Body() data: CreateInvoiceDto,
     @UploadedFiles() files: Express.Multer.File[] = [],
   ) {
-    const invoiceId = uuidv4();
+    // Save invoice and get the saved invoice
+    let invoice = await this.invoicesService.create(data);
 
+    // Upload logos to Cloudflare R2
     let fromLogoUrl: string | null = null;
     let toLogoUrl: string | null = null;
 
@@ -33,23 +44,23 @@ export class InvoicesController {
       const fileExtension = file.originalname.split('.').pop();
 
       if (file.fieldname === 'fromLogo') {
-        const key = `invoices/${invoiceId}/from.${fileExtension}`;
+        const key = `invoices/${invoice.id}/from.${fileExtension}`;
         fromLogoUrl = await this.cloudflareR2Service.uploadFile(key, file);
       } else if (file.fieldname === 'toLogo') {
-        const key = `invoices/${invoiceId}/to.${fileExtension}`;
+        const key = `invoices/${invoice.id}/to.${fileExtension}`;
         toLogoUrl = await this.cloudflareR2Service.uploadFile(key, file);
       }
     }
 
-    data.fromLogo = fromLogoUrl;
-    data.toLogo = toLogoUrl;
+    // Update invoice with logo URLs
+    invoice = await this.invoicesService.update(invoice.id, {
+      fromLogo: fromLogoUrl,
+      toLogo: toLogoUrl,
+    });
 
     return {
       message: 'Invoice created successfully',
-      invoice: {
-        id: invoiceId,
-        ...data,
-      },
+      invoice,
     };
   }
 }

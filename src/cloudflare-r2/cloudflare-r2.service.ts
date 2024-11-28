@@ -5,6 +5,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 export class CloudflareR2Service {
   private readonly s3Client: S3Client;
   private readonly bucketName = process.env.R2_BUCKET_NAME;
+  private readonly publicDomain = process.env.R2_PUBLIC_DOMAIN;
 
   constructor() {
     this.s3Client = new S3Client({
@@ -15,10 +16,6 @@ export class CloudflareR2Service {
         secretAccessKey: process.env.R2_SECRET_KEY_ID,
       },
     });
-
-    console.log('Bucket Name:', this.bucketName);
-    console.log('Access Key:', process.env.R2_ACCESS_KEY_ID);
-    console.log('Secret Key:', process.env.R2_SECRET_KEY_ID);
   }
 
   /**
@@ -32,14 +29,13 @@ export class CloudflareR2Service {
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: key,
-        Body: file.buffer, // El archivo en formato buffer
-        ContentType: file.mimetype, // Tipo MIME del archivo
+        Body: file.buffer,
+        ContentType: file.mimetype,
       });
 
       await this.s3Client.send(command);
 
-      // Devuelve la URL pública del archivo subido
-      return `https://${this.bucketName}.r2.cloudflarestorage.com/${key}`;
+      return `${this.publicDomain}/${key}`;
     } catch (error) {
       console.error('Error uploading file to Cloudflare R2:', error);
       throw new Error('File upload failed');
